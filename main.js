@@ -1,51 +1,51 @@
 //@ts-check
 export const I2C_ADDRESS = 0x3C
-const SSD1306_SETCONTRAST = 0x81
-const SSD1306_DISPLAYALLON_RESUME = 0xA4
-const SSD1306_DISPLAYALLON = 0xA5
-const SSD1306_NORMALDISPLAY = 0xA6
-const SSD1306_INVERTDISPLAY = 0xA7
-const SSD1306_DISPLAYOFF = 0xAE
-const SSD1306_DISPLAYON = 0xAF
-const SSD1306_SUGGESTEDRATIO = 0x80
-const SSD1306_SETDISPLAYOFFSET = 0xD3
-const SSD1306_SETCOMPINS = 0xDA
+const SET_CONTRAST = 0x81
+const DISPLAY_ALL_ON_RESUME = 0xA4
+const DISPLAY_ALL_ON = 0xA5
+const NORMAL_DISPLAY = 0xA6
+const INVERT_DISPLAY = 0xA7
+const DISPLAY_OFF = 0xAE
+const DISPLAY_ON = 0xAF
+const SUGGESTED_RATIO = 0x80
+const SET_DISPLAY_OFFSET = 0xD3
+const SET_COMPINS = 0xDA
 
-const SSD1306_SETVCOMDETECT = 0xDB
+const SET_VCOMDETECT = 0xDB
 
-const SSD1306_SETDISPLAYCLOCKDIV = 0xD5
-const SSD1306_SETPRECHARGE = 0xD9
+const SET_DISPLAY_CLOCK_DIV = 0xD5
+const SET_PRECHARGE = 0xD9
 
-const SSD1306_SETMULTIPLEX = 0xA8
+const SET_MULTIPLEX = 0xA8
 
-const SSD1306_SETLOWCOLUMN = 0x00
-const SSD1306_SETHIGHCOLUMN = 0x10
+const SET_LOW_COLUMN = 0x00
+const SET_HIGH_COLUMN = 0x10
 
-const SSD1306_SETSTARTLINE = 0x40
+const SET_START_LINE = 0x40
 
-const SSD1306_MEMORYMODE = 0x20
-const SSD1306_COLUMNADDR = 0x21
-const SSD1306_PAGEADDR = 0x22
+const MEMORY_MODE = 0x20
+const COLUMN_ADDR = 0x21
+const PAGE_ADDR = 0x22
 
-const SSD1306_COMSCANINC = 0xC0
-const SSD1306_COMSCANDEC = 0xC8
+const COM_SCAN_INC = 0xC0
+const COM_SCAN_DEC = 0xC8
 
-const SSD1306_SEGREMAP = 0xA0
+const SEG_REMAP = 0xA0
 
-const SSD1306_CHARGEPUMP = 0x8D
+const CHARGE_PUMP = 0x8D
 
-const SSD1306_EXTERNALVCC = 0x1
-const SSD1306_SWITCHCAPVCC = 0x2
+const EXTERNAL_VCC = 0x1
+const SWITCH_CAP_VCC = 0x2
 
-const SSD1306_ACTIVATE_SCROLL = 0x2F
-const SSD1306_DEACTIVATE_SCROLL = 0x2E
-const SSD1306_SET_VERTICAL_SCROLL_AREA = 0xA3
-const SSD1306_RIGHT_HORIZONTAL_SCROLL = 0x26
-const SSD1306_LEFT_HORIZONTAL_SCROLL = 0x27
-const SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL = 0x29
-const SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL = 0x2A
+const ACTIVATE_SCROLL = 0x2F
+const DEACTIVATE_SCROLL = 0x2E
+const SET_VERTICAL_SCROLL_AREA = 0xA3
+const RIGHT_HORIZONTAL_SCROLL = 0x26
+const LEFT_HORIZONTAL_SCROLL = 0x27
+const VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL = 0x29
+const VERTICAL_AND_LEFT_HORIZONTAL_SCROLL = 0x2A
 
-const SSD1306_LCDWIDTH = 128
+const LCD_WIDTH = 128
 
 const sendCommands = (write, commands) => commands.forEach(command => write([0, command]))
 
@@ -55,27 +55,27 @@ const sendCommands = (write, commands) => commands.forEach(command => write([0, 
  */
 const createPages = bitmap => {
     const pages = []
-    for (let pageIndex = 0; pageIndex < bitmap.length; pageIndex += SSD1306_LCDWIDTH) {
-        const page = new Uint8Array(bitmap.buffer, pageIndex, SSD1306_LCDWIDTH);
+    for (let pageIndex = 0; pageIndex < bitmap.length; pageIndex += LCD_WIDTH) {
+        const page = new Uint8Array(bitmap.buffer, pageIndex, LCD_WIDTH);
         pages.push(page)
     }
     return pages
 }
 
 const createPageWrite = write => bitmapPage => {
-    const page = new Uint8Array(SSD1306_LCDWIDTH + 1);
-    page.set([SSD1306_SETSTARTLINE], 0)
+    const page = new Uint8Array(LCD_WIDTH + 1);
+    page.set([SET_START_LINE], 0)
     page.set(bitmapPage, 1)
     write(page)
 }
 
 function createRender(write, height) {
     const renderCommands = new Uint8Array([
-        SSD1306_COLUMNADDR,
+        COLUMN_ADDR,
         0x00,
-        SSD1306_LCDWIDTH - 1,
+        LCD_WIDTH - 1,
 
-        SSD1306_PAGEADDR,
+        PAGE_ADDR,
         0x00,
         (height >> 3) - 1 // height >> 3 == number of pages
     ]);
@@ -95,42 +95,42 @@ function createRender(write, height) {
 
 function displayInitialization(write, height, externalVCC = 0x00) {
     const initializationCommands = new Uint8Array([
-        SSD1306_DISPLAYOFF,
-        SSD1306_SETDISPLAYCLOCKDIV,
-        SSD1306_SUGGESTEDRATIO,
+        DISPLAY_OFF,
+        SET_DISPLAY_CLOCK_DIV,
+        SUGGESTED_RATIO,
 
-        SSD1306_SETMULTIPLEX,
+        SET_MULTIPLEX,
         height - 1,
 
-        SSD1306_SETDISPLAYOFFSET,
+        SET_DISPLAY_OFFSET,
         0x00,
 
-        SSD1306_SETSTARTLINE,
+        SET_START_LINE,
 
-        SSD1306_CHARGEPUMP,
-        externalVCC === SSD1306_EXTERNALVCC ? 0x10 : 0x14,
+        CHARGE_PUMP,
+        externalVCC === EXTERNAL_VCC ? 0x10 : 0x14,
 
-        SSD1306_MEMORYMODE,
+        MEMORY_MODE,
         0x00,
 
-        SSD1306_SEGREMAP | 0x01,
-        SSD1306_COMSCANDEC,
+        SEG_REMAP | 0x01,
+        COM_SCAN_DEC,
 
-        SSD1306_SETCOMPINS,
+        SET_COMPINS,
         height === 64 ? 0x12 : 0x02,
 
-        SSD1306_SETCONTRAST,
-        externalVCC === SSD1306_EXTERNALVCC ? 0x9F : 0xCF,
+        SET_CONTRAST,
+        externalVCC === EXTERNAL_VCC ? 0x9F : 0xCF,
 
-        SSD1306_SETPRECHARGE,
-        externalVCC === SSD1306_EXTERNALVCC ? 0x22 : 0XF1,
+        SET_PRECHARGE,
+        externalVCC === EXTERNAL_VCC ? 0x22 : 0XF1,
 
-        SSD1306_SETVCOMDETECT,
+        SET_VCOMDETECT,
         0x40,
 
-        SSD1306_DISPLAYALLON_RESUME,
-        SSD1306_NORMALDISPLAY,
-        SSD1306_DISPLAYON
+        DISPLAY_ALL_ON_RESUME,
+        NORMAL_DISPLAY,
+        DISPLAY_ON
     ])
     sendCommands(write, initializationCommands)
 }
@@ -151,17 +151,17 @@ export function createDisplay(setup, write, height) {
  * Switches display off
  * @param {Object} display 
  */
-export const switchOff = display => display.write([0, SSD1306_DISPLAYOFF])
+export const switchOff = display => display.write([0, DISPLAY_OFF])
 
 /**
  * Switches display on
  * @param {Object} display 
  */
-export const switchOn = display => display.write([0, SSD1306_DISPLAYON])
+export const switchOn = display => display.write([0, DISPLAY_ON])
 
 /**
  * Sets the contrast of a display
  * @param {Object} display 
  * @param {number} contrast between 0...255
  */
-export const setContrast = (display, contrast) => display.write([0, SSD1306_SETCONTRAST, contrast])
+export const setContrast = (display, contrast) => display.write([0, SET_CONTRAST, contrast])
